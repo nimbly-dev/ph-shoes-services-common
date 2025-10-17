@@ -1,0 +1,39 @@
+name: Maven Package
+
+on:
+  push:
+    branches: [ main ]        # build on pushes to main (optional but handy)
+    tags:     [ "v*" ]        # build on version tags
+  release: { types: [created] }
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # needed by the generated settings.xml
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sets up JDK AND writes a Maven settings.xml with a <server id="github">
+      - name: Set up Temurin JDK 21 + Maven settings
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'        # or '17' to match your project
+          cache: maven
+          server-id: github-nimbly
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Verify toolchain
+        run: |
+          java -version
+          mvn -v
+
+      - name: Build & Publish
+        run: mvn -B -U -DskipTests deploy
