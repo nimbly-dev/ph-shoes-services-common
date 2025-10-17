@@ -1,6 +1,7 @@
 package com.nimbly.phshoesbackend.services.common.core.repository;
 
-import com.nimbly.phshoesbackend.useraccount.model.SuppressionEntry;
+
+import com.nimbly.phshoesbackend.services.common.core.model.SuppressionEntry;
 
 public interface SuppressionRepository {
     boolean isSuppressed(String email);

@@ -1,9 +1,10 @@
 package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
-import com.nimbly.phshoesbackend.useraccount.model.Account;
-import com.nimbly.phshoesbackend.useraccount.model.dto.SessionItemDto;
-import com.nimbly.phshoesbackend.useraccount.model.dto.VerificationItemDto;
-import com.nimbly.phshoesbackend.useraccount.repository.AccountRepository;
+
+import com.nimbly.phshoesbackend.services.common.core.model.Account;
+import com.nimbly.phshoesbackend.services.common.core.model.dto.SessionItemDto;
+import com.nimbly.phshoesbackend.services.common.core.model.dto.VerificationItemDto;
+import com.nimbly.phshoesbackend.services.common.core.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.*;

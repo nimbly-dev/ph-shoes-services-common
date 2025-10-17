@@ -1,8 +1,9 @@
 package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
-import com.nimbly.phshoesbackend.useraccount.model.VerificationAttrs;
-import com.nimbly.phshoesbackend.useraccount.model.VerificationEntry;
-import com.nimbly.phshoesbackend.useraccount.repository.VerificationRepository;
+
+import com.nimbly.phshoesbackend.services.common.core.model.VerificationEntry;
+import com.nimbly.phshoesbackend.services.common.core.model.dynamo.VerificationAttrs;
+import com.nimbly.phshoesbackend.services.common.core.repository.VerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;

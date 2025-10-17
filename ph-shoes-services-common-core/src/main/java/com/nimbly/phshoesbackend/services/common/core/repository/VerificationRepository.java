@@ -1,6 +1,7 @@
 package com.nimbly.phshoesbackend.services.common.core.repository;
 
-import com.nimbly.phshoesbackend.useraccount.model.VerificationEntry;
+
+import com.nimbly.phshoesbackend.services.common.core.model.VerificationEntry;
 
 import java.util.Optional;
 

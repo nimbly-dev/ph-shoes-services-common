@@ -1,6 +1,7 @@
 package com.nimbly.phshoesbackend.services.common.core.repository;
 
-import com.nimbly.phshoesbackend.useraccount.model.Account;
+
+import com.nimbly.phshoesbackend.services.common.core.model.Account;
 
 import java.util.Optional;
 

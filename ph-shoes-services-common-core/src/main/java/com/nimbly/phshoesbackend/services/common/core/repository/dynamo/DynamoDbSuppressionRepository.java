@@ -1,9 +1,10 @@
 package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
-import com.nimbly.phshoesbackend.useraccount.model.SuppressionAttrs;
-import com.nimbly.phshoesbackend.useraccount.model.SuppressionEntry;
-import com.nimbly.phshoesbackend.useraccount.model.SuppressionReason;
-import com.nimbly.phshoesbackend.useraccount.repository.SuppressionRepository;
+
+import com.nimbly.phshoesbackend.services.common.core.model.SuppressionEntry;
+import com.nimbly.phshoesbackend.services.common.core.model.SuppressionReason;
+import com.nimbly.phshoesbackend.services.common.core.model.dynamo.SuppressionAttrs;
+import com.nimbly.phshoesbackend.services.common.core.repository.SuppressionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;

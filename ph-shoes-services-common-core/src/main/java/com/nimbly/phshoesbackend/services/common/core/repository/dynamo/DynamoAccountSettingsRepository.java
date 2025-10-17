@@ -1,7 +1,8 @@
 package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
-import com.nimbly.phshoesbackend.useraccount.model.AccountAttrs;
-import com.nimbly.phshoesbackend.useraccount.repository.AccountSettingsRepository;
+
+import com.nimbly.phshoesbackend.services.common.core.model.dynamo.AccountAttrs;
+import com.nimbly.phshoesbackend.services.common.core.repository.AccountSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
