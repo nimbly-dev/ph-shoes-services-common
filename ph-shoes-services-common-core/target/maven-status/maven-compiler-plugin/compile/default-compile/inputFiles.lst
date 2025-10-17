@@ -1,0 +1,17 @@
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\Account.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\dto\SessionItemDto.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\dto\VerificationItemDto.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\dynamo\AccountAttrs.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\dynamo\SuppressionAttrs.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\dynamo\VerificationAttrs.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\SuppressionEntry.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\SuppressionReason.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\model\VerificationEntry.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\AccountRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\AccountSettingsRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\dynamo\DynamoAccountSettingsRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\dynamo\DynamoDbAccountRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\dynamo\DynamoDbSuppressionRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\dynamo\DynamoVerificationRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\SuppressionRepository.java
+C:\Users\nimbl\Projects\ph-shoes-services\ph-shoes-services-common\ph-shoes-services-common-core\src\main\java\com\nimbly\phshoesbackend\services\common\core\repository\VerificationRepository.java
