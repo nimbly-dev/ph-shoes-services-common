@@ -1,12 +1,20 @@
 package com.nimbly.phshoesbackend.services.common.core.migrations.utility;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
+import java.util.Set;
+
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class IndexOps {
+    private final DynamoDbClient ddb;
+
     public void addGsiAll(DynamoDbClient ddb, String table, String indexName,
                           String hashAttr, ScalarAttributeType hashType,
                           long rcu, long wcu, Logger log) {
