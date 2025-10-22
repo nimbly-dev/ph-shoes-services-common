@@ -19,4 +19,34 @@ public class IndexOps {
                         .provisionedThroughput(t -> t.readCapacityUnits(rcu).writeCapacityUnits(wcu)))));
         log.info("Requested creation of GSI {} on {}", indexName, table);
     }
+
+    public void ensureGsiAll(String table, String indexName,
+                             String hashAttr, ScalarAttributeType hashType) {
+        var desc = ddb.describeTable(b -> b.tableName(table)).table();
+        boolean exists = desc.globalSecondaryIndexes() != null &&
+                desc.globalSecondaryIndexes().stream().anyMatch(g -> g.indexName().equals(indexName));
+        if (exists) { log.info("[migrations] GSI exists: {} on {}", indexName, table); return; }
+
+        // add missing attribute definition if needed
+        var defined = desc.attributeDefinitions() == null ? Set.<String>of() :
+                desc.attributeDefinitions().stream().map(AttributeDefinition::attributeName).collect(java.util.stream.Collectors.toSet());
+        var update = UpdateTableRequest.builder()
+                .tableName(table)
+                .attributeDefinitions(defined.contains(hashAttr)
+                        ? desc.attributeDefinitions()
+                        : java.util.stream.Stream.concat(
+                        desc.attributeDefinitions().stream(),
+                        java.util.stream.Stream.of(AttributeDefinition.builder().attributeName(hashAttr).attributeType(hashType).build())
+                ).toList())
+                .globalSecondaryIndexUpdates(GlobalSecondaryIndexUpdate.builder()
+                        .create(CreateGlobalSecondaryIndexAction.builder()
+                                .indexName(indexName)
+                                .keySchema(KeySchemaElement.builder().attributeName(hashAttr).keyType(KeyType.HASH).build())
+                                .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                                .build())
+                        .build())
+                .build();
+        ddb.updateTable(update);
+        log.info("[migrations] requested creation of GSI {} on {}", indexName, table);
+    }
 }
