@@ -16,32 +16,29 @@ public class TableCreator {
     private final DynamoDbClient ddb;
 
     /** Create table if missing; wait ACTIVE; idempotent. */
-    public void ensureTable(String tableName,
+    public void ensureTable(String table,
                             List<AttributeDefinition> attrs,
-                            List<KeySchemaElement> keySchema) {
-        if (exists(tableName)) {
-            log.info("[migrations] table exists: {}", tableName);
-            return;
-        }
-        log.info("[migrations] creating table: {}", tableName);
-        ddb.createTable(CreateTableRequest.builder()
-                .tableName(tableName)
+                            List<KeySchemaElement> key,
+                            List<GlobalSecondaryIndex> gsis) {
+        if (tableExists(table)) { log.info("[migrations] table exists: {}", table); return; }
+
+        log.info("[migrations] creating table: {}", table);
+        var req = CreateTableRequest.builder()
+                .tableName(table)
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .attributeDefinitions(attrs)
-                .keySchema(keySchema)
-                .build());
-        try (DynamoDbWaiter waiter = ddb.waiter()) {
-            waiter.waitUntilTableExists(DescribeTableRequest.builder().tableName(tableName).build());
+                .keySchema(key)
+                .globalSecondaryIndexes(gsis == null ? List.of() : gsis)
+                .build();
+        ddb.createTable(req);
+        try (DynamoDbWaiter w = ddb.waiter()) {
+            w.waitUntilTableExists(b -> b.tableName(table));
         }
-        log.info("[migrations] ACTIVE: {}", tableName);
+        log.info("[migrations] ACTIVE: {}", table);
     }
 
-    private boolean exists(String tableName) {
-        try {
-            ddb.describeTable(DescribeTableRequest.builder().tableName(tableName).build());
-            return true;
-        } catch (ResourceNotFoundException rnfe) {
-            return false;
-        }
+    public boolean tableExists(String table) {
+        try { ddb.describeTable(b -> b.tableName(table)); return true; }
+        catch (ResourceNotFoundException rnfe) { return false; }
     }
 }
