@@ -6,6 +6,7 @@ import com.nimbly.phshoesbackend.services.common.core.model.dto.SessionItemDto;
 import com.nimbly.phshoesbackend.services.common.core.model.dto.VerificationItemDto;
 import com.nimbly.phshoesbackend.services.common.core.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags;
@@ -18,6 +19,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Optional;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class DynamoDbAccountRepository implements AccountRepository {
@@ -144,7 +146,7 @@ public class DynamoDbAccountRepository implements AccountRepository {
         if (email == null || email.isBlank()) return Optional.empty();
 
         String normalized = normalize(email); // lower/trim
-
+        log.info("Normalized email: " + normalized);
         DynamoDbIndex<Account> idx = table().index(GSI_EMAIL);
         QueryEnhancedRequest req = QueryEnhancedRequest.builder()
                 .queryConditional(QueryConditional.keyEqualTo(
