@@ -4,6 +4,7 @@ package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 import com.nimbly.phshoesbackend.services.common.core.model.Account;
 import com.nimbly.phshoesbackend.services.common.core.model.dto.SessionItemDto;
 import com.nimbly.phshoesbackend.services.common.core.model.dto.VerificationItemDto;
+import com.nimbly.phshoesbackend.services.common.core.model.dynamo.AccountAttrs;
 import com.nimbly.phshoesbackend.services.common.core.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -145,41 +146,19 @@ public class DynamoDbAccountRepository implements AccountRepository {
     public Optional<Account> findByEmail(String email) {
         if (email == null || email.isBlank()) return Optional.empty();
 
-        String normalized = normalize(email);
-        log.info("Normalized email for lookup: {}", normalized);
+        String normalized = email.trim().toLowerCase();
+        DynamoDbIndex<Account> idx = table().index(AccountAttrs.GSI_EMAIL);
 
-        DynamoDbIndex<Account> idx = table().index(GSI_EMAIL);
-
-        // GSI query
-        QueryEnhancedRequest q = QueryEnhancedRequest.builder()
+        QueryEnhancedRequest req = QueryEnhancedRequest.builder()
                 .queryConditional(QueryConditional.keyEqualTo(
                         Key.builder().partitionValue(normalized).build()
                 ))
                 .limit(1)
                 .build();
 
-        var gsiResult = idx.query(q)
-                .stream()
-                .peek(p -> log.info("GSI page count={}", p.items().size()))
+        return idx.query(req).stream()
                 .flatMap(p -> p.items().stream())
                 .findFirst();
-
-        if (gsiResult.isPresent()) {
-            log.info("GSI hit userId={} email={}", gsiResult.get().getUserid(), gsiResult.get().getEmail());
-            return gsiResult;
-        }
-
-        // ---- TEMP: fallback scan to diagnose indexing issues ----
-        log.warn("GSI miss; scanning base table for email='{}' (TEMP)", normalized);
-        var scanResult = table().scan().items().stream()
-                .filter(a -> normalized.equals(a.getEmail()))
-                .findFirst();
-
-        scanResult.ifPresent(a ->
-                log.warn("SCAN found item but GSI missed it. userId={} email={}", a.getUserid(), a.getEmail())
-        );
-
-        return scanResult;
     }
 
     @Override
