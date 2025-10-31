@@ -141,27 +141,22 @@ public class DynamoDbAccountRepository implements AccountRepository {
 
     @Override
     public Optional<Account> findByEmail(String email) {
-        if (email == null) return Optional.empty();
+        if (email == null || email.isBlank()) return Optional.empty();
 
-        // 1) Query GSI with normalized+hashed email
-        String key = emailHash(normalize(email));
+        String normalized = normalize(email); // lower/trim
+
         DynamoDbIndex<Account> idx = table().index(GSI_EMAIL);
-
         QueryEnhancedRequest req = QueryEnhancedRequest.builder()
-                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(key).build()))
+                .queryConditional(QueryConditional.keyEqualTo(
+                        Key.builder().partitionValue(normalized).build()
+                ))
                 .limit(1)
                 .build();
 
-        var firstFromIndex = idx.query(req)
+        return idx.query(req)
                 .stream()
                 .flatMap(p -> p.items().stream())
                 .findFirst();
-
-        if (firstFromIndex.isEmpty()) return Optional.empty();
-
-        // 2) Re-fetch full item by PK to ensure all attributes (e.g., password) are present
-        String userId = firstFromIndex.get().getUserid();
-        return findById(userId);
     }
 
     @Override
