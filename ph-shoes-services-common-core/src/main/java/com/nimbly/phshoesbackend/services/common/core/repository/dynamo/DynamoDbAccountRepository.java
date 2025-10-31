@@ -145,20 +145,41 @@ public class DynamoDbAccountRepository implements AccountRepository {
     public Optional<Account> findByEmail(String email) {
         if (email == null || email.isBlank()) return Optional.empty();
 
-        String normalized = normalize(email); // lower/trim
-        log.info("Normalized email: " + normalized);
+        String normalized = normalize(email);
+        log.info("Normalized email for lookup: {}", normalized);
+
         DynamoDbIndex<Account> idx = table().index(GSI_EMAIL);
-        QueryEnhancedRequest req = QueryEnhancedRequest.builder()
+
+        // GSI query
+        QueryEnhancedRequest q = QueryEnhancedRequest.builder()
                 .queryConditional(QueryConditional.keyEqualTo(
                         Key.builder().partitionValue(normalized).build()
                 ))
                 .limit(1)
                 .build();
 
-        return idx.query(req)
+        var gsiResult = idx.query(q)
                 .stream()
+                .peek(p -> log.info("GSI page count={}", p.items().size()))
                 .flatMap(p -> p.items().stream())
                 .findFirst();
+
+        if (gsiResult.isPresent()) {
+            log.info("GSI hit userId={} email={}", gsiResult.get().getUserid(), gsiResult.get().getEmail());
+            return gsiResult;
+        }
+
+        // ---- TEMP: fallback scan to diagnose indexing issues ----
+        log.warn("GSI miss; scanning base table for email='{}' (TEMP)", normalized);
+        var scanResult = table().scan().items().stream()
+                .filter(a -> normalized.equals(a.getEmail()))
+                .findFirst();
+
+        scanResult.ifPresent(a ->
+                log.warn("SCAN found item but GSI missed it. userId={} email={}", a.getUserid(), a.getEmail())
+        );
+
+        return scanResult;
     }
 
     @Override
