@@ -2,6 +2,7 @@ package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
 
 import com.nimbly.phshoesbackend.services.common.core.model.VerificationEntry;
+import com.nimbly.phshoesbackend.services.common.core.model.dynamo.AccountAttrs;
 import com.nimbly.phshoesbackend.services.common.core.model.dynamo.VerificationAttrs;
 import com.nimbly.phshoesbackend.services.common.core.repository.VerificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -75,7 +76,6 @@ public class DynamoVerificationRepository implements VerificationRepository {
 
     @Override
     public void markUsedIfPendingAndNotExpired(String verificationId, long nowEpochSeconds) {
-        // Sets STATUS=USED and VERIFIED_AT=now if (STATUS==PENDING && EXPIRES_AT > nowEpochSeconds)
         Map<String, String> names = Map.of(
                 "#s",   VerificationAttrs.STATUS,
                 "#va",  VerificationAttrs.VERIFIED_AT,
@@ -97,8 +97,22 @@ public class DynamoVerificationRepository implements VerificationRepository {
                 .expressionAttributeNames(names)
                 .expressionAttributeValues(values)
                 .build());
-        // If the condition fails, DynamoDB throws ConditionalCheckFailedException — let the caller handle it.
     }
 
-
+    @Override
+    public void markEmailVerified(String userId, String updatedAtIso) {
+        ddb.updateItem(UpdateItemRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .key(Map.of(
+                        AccountAttrs.PK_USERID,
+                        AttributeValue.builder().s(userId).build()))
+                .updateExpression("SET #v = :true, #u = :now")
+                .expressionAttributeNames(Map.of(
+                        "#v", AccountAttrs.IS_VERIFIED,
+                        "#u", AccountAttrs.UPDATED_AT))
+                .expressionAttributeValues(Map.of(
+                        ":true", AttributeValue.builder().bool(true).build(),
+                        ":now",  AttributeValue.builder().s(updatedAtIso).build()))
+                .build());
+    }
 }
