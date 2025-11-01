@@ -146,12 +146,13 @@ public class DynamoDbAccountRepository implements AccountRepository {
     public Optional<Account> findByEmail(String email) {
         if (email == null || email.isBlank()) return Optional.empty();
 
-        String normalized = email.trim().toLowerCase();
+        String normalized = email.trim().toLowerCase(java.util.Locale.ROOT);
+
         DynamoDbIndex<Account> idx = table().index(AccountAttrs.GSI_EMAIL);
 
         QueryEnhancedRequest req = QueryEnhancedRequest.builder()
                 .queryConditional(QueryConditional.keyEqualTo(
-                        Key.builder().partitionValue(normalized).build()
+                        Key.builder().partitionValue(emailHash(normalized)).build()
                 ))
                 .limit(1)
                 .build();
