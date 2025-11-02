@@ -8,11 +8,11 @@ import java.security.MessageDigest;
 @Component
 public class HashingUtil {
 
-    public static String normalize(String email) {
+    public String normalize(String email) {
         return email == null ? null : email.trim().toLowerCase();
     }
 
-    public static String sha256Hex(String s) {
+    public String sha256Hex(String s) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] d = md.digest(s.getBytes(StandardCharsets.UTF_8));
@@ -24,7 +24,7 @@ public class HashingUtil {
         }
     }
 
-    public static String hashEmail(String rawEmail) {
+    public String hashEmail(String rawEmail) {
         String norm = normalize(rawEmail);
         return sha256Hex(norm == null ? "" : norm);
     }
