@@ -24,7 +24,7 @@ public class VerificationEntry {
     private String emailPlain;     // normalized/plain (lowercased)
 
     // ---- Token/flow status ----
-    private String status;         // "PENDING" | "USED" | "CANCELLED"
+    private VerificationStatus status;
     private String codeHash;       // optional: if you also support 6-digit code entry
 
     // ---- Timestamps ----
