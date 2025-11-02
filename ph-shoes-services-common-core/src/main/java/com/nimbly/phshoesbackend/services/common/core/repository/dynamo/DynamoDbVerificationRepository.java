@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class DynamoVerificationRepository implements VerificationRepository {
+public class DynamoDbVerificationRepository implements VerificationRepository {
 
     private final DynamoDbEnhancedClient enhanced;
 
@@ -25,34 +25,32 @@ public class DynamoVerificationRepository implements VerificationRepository {
     }
 
     @Override
-    public void put(VerificationEntry e) {
-        table().putItem(e);
+    public void put(VerificationEntry entry) {
+        table().putItem(entry);
     }
 
     @Override
     public Optional<VerificationEntry> getById(String verificationId, boolean consistentRead) {
-        Key key = Key.builder().partitionValue(verificationId).build();
-        GetItemEnhancedRequest req = GetItemEnhancedRequest.builder()
-                .key(key)
+        var req = GetItemEnhancedRequest.builder()
+                .key(Key.builder().partitionValue(verificationId).build())
                 .consistentRead(consistentRead)
                 .build();
-        VerificationEntry out = table().getItem(req);
-        return Optional.ofNullable(out);
+        return Optional.ofNullable(table().getItem(req));
     }
 
     @Override
     public void markUsedIfPendingAndNotExpired(String verificationId, long nowEpochSeconds) {
-        VerificationEntry partial = new VerificationEntry();
+        var partial = new VerificationEntry();
         partial.setVerificationId(verificationId);
         partial.setStatus(VerificationStatus.VERIFIED);
-        partial.setVerifiedAt(Instant.ofEpochSecond(nowEpochSeconds).toString());
+        partial.setVerifiedAt(Instant.ofEpochSecond(nowEpochSeconds)); // keep Instant type
 
-        Expression cond = Expression.builder()
-                .expression("#s = :pending AND #exp > :nowNum")
-                .putExpressionName("#s", VerificationAttrs.STATUS)
+        var cond = Expression.builder()
+                .expression("#st = :pending AND #exp > :now")
+                .putExpressionName("#st", VerificationAttrs.STATUS)
                 .putExpressionName("#exp", VerificationAttrs.EXPIRES_AT)
-                .putExpressionValue(":pending", AttributeValue.builder().s(VerificationStatus.PENDING.name()).build())
-                .putExpressionValue(":nowNum",  AttributeValue.builder().n(Long.toString(nowEpochSeconds)).build())
+                .putExpressionValue(":pending", AttributeValue.fromS(VerificationStatus.PENDING.name()))
+                .putExpressionValue(":now", AttributeValue.fromN(Long.toString(nowEpochSeconds)))
                 .build();
 
         table().updateItem(UpdateItemEnhancedRequest.builder(VerificationEntry.class)
@@ -64,14 +62,14 @@ public class DynamoVerificationRepository implements VerificationRepository {
 
     @Override
     public void markStatusIfPending(String verificationId, VerificationStatus newStatus) {
-        VerificationEntry partial = new VerificationEntry();
+        var partial = new VerificationEntry();
         partial.setVerificationId(verificationId);
         partial.setStatus(newStatus);
 
-        Expression cond = Expression.builder()
-                .expression("#s = :pending")
-                .putExpressionName("#s", VerificationAttrs.STATUS)
-                .putExpressionValue(":pending", AttributeValue.builder().s(VerificationStatus.PENDING.name()).build())
+        var cond = Expression.builder()
+                .expression("#st = :pending")
+                .putExpressionName("#st", VerificationAttrs.STATUS)
+                .putExpressionValue(":pending", AttributeValue.fromS(VerificationStatus.PENDING.name()))
                 .build();
 
         table().updateItem(UpdateItemEnhancedRequest.builder(VerificationEntry.class)

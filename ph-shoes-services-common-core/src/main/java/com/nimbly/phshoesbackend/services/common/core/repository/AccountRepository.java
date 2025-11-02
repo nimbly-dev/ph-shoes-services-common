@@ -6,19 +6,13 @@ import com.nimbly.phshoesbackend.services.common.core.model.Account;
 import java.util.Optional;
 
 public interface AccountRepository {
-    Optional<Account> findById(String userId);
-    Optional<Account> findByEmail(String email);
-    Account save(Account account); // create/update
+    Optional<Account> findByUserId(String userId);
 
-    void recordFailedLogin(String userIdOrEmail, int maxFailures, int lockSeconds);
-    void recordSuccessfulLogin(String userId, String ip, String userAgent);
+    Optional<Account> findByEmailHash(String emailHash);
 
-    void deleteById(String userId);
+    boolean existsByEmailHash(String emailHash);
 
-    void createSession(String jti, String userId, long expEpochSeconds, String ip, String ua);
-    boolean isSessionActive(String jti);
-    void revokeSession(String jti);
+    void save(Account account);
 
-    void revokeAllSessionsForUser(String userid);
-    void markEmailVerified(String userId);
+    void setVerified(String userId, boolean verified);
 }

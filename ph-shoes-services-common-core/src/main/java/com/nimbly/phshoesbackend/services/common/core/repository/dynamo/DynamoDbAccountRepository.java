@@ -1,290 +1,164 @@
+// DynamoAccountRepository.java
 package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
-
 import com.nimbly.phshoesbackend.services.common.core.model.Account;
-import com.nimbly.phshoesbackend.services.common.core.model.dto.SessionItemDto;
-import com.nimbly.phshoesbackend.services.common.core.model.dto.VerificationItemDto;
 import com.nimbly.phshoesbackend.services.common.core.model.dynamo.AccountAttrs;
 import com.nimbly.phshoesbackend.services.common.core.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-import software.amazon.awssdk.enhanced.dynamodb.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class DynamoDbAccountRepository implements AccountRepository {
 
-    private static final String TABLE = "accounts";
-    private static final String GSI_EMAIL = "gsi_email";
-    private static final String SESSIONS_TABLE = "auth_sessions";
-    private static final String SESSION_GSI_USER = "gsi_userId";
-    private static final String VERIF_TABLE = "verifications";
+    private final DynamoDbClient ddb;
 
-    private final DynamoDbEnhancedClient enhanced;
+    @Override
+    public Optional<Account> findByUserId(String userId) {
+        var response = ddb.getItem(GetItemRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .key(Map.of(AccountAttrs.PK_USERID, AttributeValue.fromS(userId)))
+                .consistentRead(true)
+                .build());
 
-
-    private static final TableSchema<SessionItemDto> SESSIONS_SCHEMA =
-            StaticTableSchema.builder(SessionItemDto.class)
-                    .newItemSupplier(SessionItemDto::new)
-                    .addAttribute(String.class,  a -> a.name("jti")
-                            .getter(SessionItemDto::getJti).setter(SessionItemDto::setJti)
-                            .tags(StaticAttributeTags.primaryPartitionKey()))
-                    .addAttribute(String.class,  a -> a.name("userId")
-                            .getter(SessionItemDto::getUserId).setter(SessionItemDto::setUserId)
-                            // ⬇️ THIS TAG IS REQUIRED so index("gsi_userId") knows its PK
-                            .tags(StaticAttributeTags.secondaryPartitionKey(SESSION_GSI_USER)))
-                    .addAttribute(String.class,  a -> a.name("status")
-                            .getter(SessionItemDto::getStatus).setter(SessionItemDto::setStatus))
-                    .addAttribute(Long.class,    a -> a.name("ttl")
-                            .getter(SessionItemDto::getTtl).setter(SessionItemDto::setTtl))
-                    .addAttribute(Instant.class, a -> a.name("createdAt")
-                            .getter(SessionItemDto::getCreatedAt).setter(SessionItemDto::setCreatedAt))
-                    .addAttribute(Instant.class, a -> a.name("expiresAt")
-                            .getter(SessionItemDto::getExpiresAt).setter(SessionItemDto::setExpiresAt))
-                    .addAttribute(Instant.class, a -> a.name("revokedAt")
-                            .getter(SessionItemDto::getRevokedAt).setter(SessionItemDto::setRevokedAt))
-                    .build();
-
-    private DynamoDbTable<SessionItemDto> sessionsTable() {
-        return enhanced.table(SESSIONS_TABLE, SESSIONS_SCHEMA);
-    }
-
-    /** accounts table schema */
-    private static final TableSchema<Account> ACCOUNT_SCHEMA =
-            StaticTableSchema.builder(Account.class)
-                    .newItemSupplier(Account::new)
-
-                    // Keys
-                    .addAttribute(String.class, a -> a.name("userid")
-                            .getter(Account::getUserid)
-                            .setter(Account::setUserid)
-                            .tags(StaticAttributeTags.primaryPartitionKey()))
-                    .addAttribute(String.class, a -> a.name("email")
-                            .getter(Account::getEmail)
-                            .setter(Account::setEmail)
-                            .tags(StaticAttributeTags.secondaryPartitionKey(GSI_EMAIL)))
-
-                    // Auth / flags
-                    .addAttribute(String.class,  a -> a.name("password")
-                            .getter(Account::getPassword)
-                            .setter(Account::setPassword))
-                    .addAttribute(Boolean.class, a -> a.name("isVerified")
-                            .getter(Account::getEmailVerified)
-                            .setter(Account::setEmailVerified))
-                    .addAttribute(Integer.class, a -> a.name("loginFailCount")
-                            .getter(Account::getLoginFailCount)
-                            .setter(Account::setLoginFailCount))
-                    .addAttribute(Long.class,    a -> a.name("lockUntil")
-                            .getter(Account::getLockUntil)
-                            .setter(Account::setLockUntil))
-
-                    // Telemetry
-                    .addAttribute(Instant.class, a -> a.name("lastLoginAt")
-                            .getter(Account::getLastLoginAt)
-                            .setter(Account::setLastLoginAt))
-                    .addAttribute(String.class,  a -> a.name("lastLoginIp")
-                            .getter(Account::getLastLoginIp)
-                            .setter(Account::setLastLoginIp))
-                    .addAttribute(String.class,  a -> a.name("lastLoginUserAgent")
-                            .getter(Account::getLastLoginUserAgent)
-                            .setter(Account::setLastLoginUserAgent))
-
-                    // Housekeeping
-                    .addAttribute(Instant.class, a -> a.name("createdAt")
-                            .getter(Account::getCreatedAt)
-                            .setter(Account::setCreatedAt))
-                    .addAttribute(Instant.class, a -> a.name("updatedAt")
-                            .getter(Account::getUpdatedAt)
-                            .setter(Account::setUpdatedAt))
-                    .build();
-
-    private static final TableSchema<VerificationItemDto> VERIF_SCHEMA =
-            StaticTableSchema.builder(VerificationItemDto.class)
-                    .newItemSupplier(VerificationItemDto::new)
-                    .addAttribute(String.class,  a -> a.name("id")
-                            .getter(VerificationItemDto::getId).setter(VerificationItemDto::setId)
-                            .tags(StaticAttributeTags.primaryPartitionKey()))
-                    .addAttribute(String.class,  a -> a.name("userId")
-                            .getter(VerificationItemDto::getUserId).setter(VerificationItemDto::setUserId))
-                    .addAttribute(String.class,  a -> a.name("emailPlain")
-                            .getter(VerificationItemDto::getEmailPlain).setter(VerificationItemDto::setEmailPlain))
-                    .addAttribute(Instant.class, a -> a.name("createdAt")
-                            .getter(VerificationItemDto::getCreatedAt).setter(VerificationItemDto::setCreatedAt))
-                    .addAttribute(Instant.class, a -> a.name("expiresAt")
-                            .getter(VerificationItemDto::getExpiresAt).setter(VerificationItemDto::setExpiresAt))
-                    .addAttribute(Instant.class, a -> a.name("usedAt")
-                            .getter(VerificationItemDto::getUsedAt).setter(VerificationItemDto::setUsedAt))
-                    .addAttribute(Long.class,    a -> a.name("ttl")
-                            .getter(VerificationItemDto::getTtl).setter(VerificationItemDto::setTtl))
-                    .build();
-
-    private DynamoDbTable<Account> table() {
-        return enhanced.table(TABLE, ACCOUNT_SCHEMA);
-    }
-
-    private DynamoDbTable<VerificationItemDto> verifTable() {
-        return enhanced.table(VERIF_TABLE, VERIF_SCHEMA);
+        if (!response.hasItem()) return Optional.empty();
+        return Optional.of(mapToAccount(response.item()));
     }
 
     @Override
-    public Optional<Account> findById(String userId) {
-        if (userId == null) return Optional.empty();
-        return Optional.ofNullable(table().getItem(Key.builder().partitionValue(userId).build()));
-    }
-
-    @Override
-    public Optional<Account> findByEmail(String email) {
-        if (email == null || email.isBlank()) return Optional.empty();
-
-        String normalized = email.trim().toLowerCase(java.util.Locale.ROOT);
-
-        DynamoDbIndex<Account> idx = table().index(AccountAttrs.GSI_EMAIL);
-
-        QueryEnhancedRequest req = QueryEnhancedRequest.builder()
-                .queryConditional(QueryConditional.keyEqualTo(
-                        Key.builder().partitionValue(emailHash(normalized)).build()
-                ))
+    public Optional<Account> findByEmailHash(String emailHash) {
+        var query = ddb.query(QueryRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .indexName(AccountAttrs.GSI_EMAIL)
+                .keyConditionExpression("#k = :v")
+                .expressionAttributeNames(Map.of("#k", AccountAttrs.EMAIL_HASH))
+                .expressionAttributeValues(Map.of(":v", AttributeValue.fromS(emailHash)))
                 .limit(1)
-                .build();
+                .build());
 
-        return idx.query(req).stream()
-                .flatMap(p -> p.items().stream())
-                .findFirst();
+        if (query.count() == 0) return Optional.empty();
+        return Optional.of(mapToAccount(query.items().get(0)));
     }
 
     @Override
-    public Account save(Account account) {
-        return table().updateItem(account); // upsert
+    public boolean existsByEmailHash(String emailHash) {
+        var query = ddb.query(QueryRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .indexName(AccountAttrs.GSI_EMAIL)
+                .keyConditionExpression("#k = :v")
+                .expressionAttributeNames(Map.of("#k", AccountAttrs.EMAIL_HASH))
+                .expressionAttributeValues(Map.of(":v", AttributeValue.fromS(emailHash)))
+                .limit(1)
+                .build());
+        return query.count() > 0;
     }
 
     @Override
-    public void recordFailedLogin(String email, int maxFailures, int lockSeconds) {
-        findByEmail(email).ifPresent(acc -> {
-            int fails = acc.getLoginFailCount() == null ? 0 : acc.getLoginFailCount();
-            acc.setLoginFailCount(fails + 1);
-            if (acc.getLoginFailCount() >= maxFailures) {
-                acc.setLockUntil(Instant.now().plusSeconds(lockSeconds).toEpochMilli());
-            }
-            table().updateItem(acc);
-        });
+    public void save(Account account) {
+        var item = new LinkedHashMap<String, AttributeValue>(16);
+
+        if (account.getUserId() != null)
+            item.put(AccountAttrs.PK_USERID, AttributeValue.fromS(account.getUserId()));
+        if (account.getEmailHash() != null)
+            item.put(AccountAttrs.EMAIL_HASH, AttributeValue.fromS(account.getEmailHash()));
+        if (account.getEmailEnc() != null)
+            item.put(AccountAttrs.EMAIL_ENC, AttributeValue.fromS(account.getEmailEnc()));
+        if (account.getPasswordHash() != null)
+            item.put(AccountAttrs.PASSWORD_HASH, AttributeValue.fromS(account.getPasswordHash()));
+        if (account.getIsVerified() != null)
+            item.put(AccountAttrs.IS_VERIFIED, AttributeValue.fromBool(account.getIsVerified()));
+        if (account.getCreatedAt() != null)
+            item.put(AccountAttrs.CREATED_AT, AttributeValue.fromS(account.getCreatedAt().toString()));
+        if (account.getUpdatedAt() != null)
+            item.put(AccountAttrs.UPDATED_AT, AttributeValue.fromS(account.getUpdatedAt().toString()));
+        if (account.getSettingsJson() != null)
+            item.put(AccountAttrs.SETTINGS_JSON, AttributeValue.fromS(account.getSettingsJson()));
+        if (account.getLoginFailCount() != null)
+            item.put(AccountAttrs.LOGIN_FAIL_COUNT, AttributeValue.fromN(Integer.toString(account.getLoginFailCount())));
+        if (account.getLockUntil() != null)
+            item.put(AccountAttrs.LOCK_UNTIL, AttributeValue.fromS(account.getLockUntil().toString()));
+        if (account.getLastLoginAt() != null)
+            item.put(AccountAttrs.LAST_LOGIN_AT, AttributeValue.fromS(account.getLastLoginAt().toString()));
+        if (account.getLastLoginIp() != null)
+            item.put(AccountAttrs.LAST_LOGIN_IP, AttributeValue.fromS(account.getLastLoginIp()));
+        if (account.getLastLoginUserAgent() != null)
+            item.put(AccountAttrs.LAST_LOGIN_UA, AttributeValue.fromS(account.getLastLoginUserAgent()));
+
+        ddb.putItem(PutItemRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .item(item)
+                .build());
     }
 
     @Override
-    public void recordSuccessfulLogin(String userId, String ip, String ua) {
-        findById(userId).ifPresent(acc -> {
-            acc.setLoginFailCount(0);
-            acc.setLockUntil(null);
-            acc.setLastLoginAt(Instant.now());
-            acc.setLastLoginIp(ip);
-            acc.setLastLoginUserAgent(ua);
-            table().updateItem(acc);
-        });
+    public void setVerified(String userId, boolean verified) {
+        ddb.updateItem(UpdateItemRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .key(Map.of(AccountAttrs.PK_USERID, AttributeValue.fromS(userId)))
+                .updateExpression("SET #v = :v, #u = :now")
+                .conditionExpression("attribute_exists(#pk)")
+                .expressionAttributeNames(Map.of(
+                        "#v", AccountAttrs.IS_VERIFIED,
+                        "#u", AccountAttrs.UPDATED_AT,
+                        "#pk", AccountAttrs.PK_USERID
+                ))
+                .expressionAttributeValues(Map.of(
+                        ":v", AttributeValue.fromBool(verified),
+                        ":now", AttributeValue.fromS(Instant.now().toString())
+                ))
+                .build());
     }
 
-    @Override
-    public void deleteById(String userId) {
-        if (userId == null || userId.isBlank()) return;
-        table().deleteItem(Key.builder().partitionValue(userId).build());
-    }
 
+    private Account mapToAccount(Map<String, AttributeValue> item) {
+        var account = new Account();
 
-    @Override
-    public void createSession(String jti, String userId, long expEpochSeconds, String ip, String ua) {
-        var now = Instant.now();
-        var it = new SessionItemDto();
-        it.setJti(jti);
-        it.setUserId(userId);
-        it.setStatus("ACTIVE");
-        it.setCreatedAt(now);
-        it.setExpiresAt(Instant.ofEpochSecond(expEpochSeconds));
-        it.setTtl(expEpochSeconds + 60);
-        sessionsTable().putItem(it);
-    }
+        var v = item.get(AccountAttrs.PK_USERID);
+        account.setUserId(v == null ? null : v.s());
 
-    @Override
-    public boolean isSessionActive(String jti) {
-        if (jti == null || jti.isBlank()) return false;
-        var it = sessionsTable().getItem(Key.builder().partitionValue(jti).build());
-        if (it == null) return false;
-        if (!"ACTIVE".equals(it.getStatus())) return false;
-        var exp = it.getExpiresAt();
-        return exp == null || Instant.now().isBefore(exp);
-    }
+        v = item.get(AccountAttrs.EMAIL_HASH);
+        account.setEmailHash(v == null ? null : v.s());
 
-    @Override
-    public void revokeSession(String jti) {
-        var it = sessionsTable().getItem(Key.builder().partitionValue(jti).build());
-        if (it == null) return;
-        if (!"ACTIVE".equals(it.getStatus())) return;
-        it.setStatus("REVOKED");
-        it.setRevokedAt(Instant.now());
-        // keep TTL as-is (or shorten): item will auto-expire
-        sessionsTable().updateItem(it);
-    }
+        v = item.get(AccountAttrs.EMAIL_ENC);
+        account.setEmailEnc(v == null ? null : v.s());
 
-    @Override
-    public void revokeAllSessionsForUser(String userId) {
-        if (userId == null || userId.isBlank()) return;
+        v = item.get(AccountAttrs.PASSWORD_HASH);
+        account.setPasswordHash(v == null ? null : v.s());
 
-        var idx = sessionsTable().index(SESSION_GSI_USER);
-        var req = QueryEnhancedRequest.builder()
-                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(userId).build()))
-                .build();
+        var b = item.get(AccountAttrs.IS_VERIFIED);
+        account.setIsVerified(b == null ? null : b.bool());
 
-        var now = Instant.now();
-        long ttlNow = now.getEpochSecond() + 60; // speed up TTL purge
+        v = item.get(AccountAttrs.CREATED_AT);
+        account.setCreatedAt(v == null || v.s() == null ? null : Instant.parse(v.s()));
 
-        idx.query(req).stream()
-                .flatMap(p -> p.items().stream())
-                .forEach(it -> {
-                    if (!"REVOKED".equals(it.getStatus())) {
-                        it.setStatus("REVOKED");
-                        it.setRevokedAt(now);
-                        if (it.getTtl() == null || it.getTtl() > ttlNow) it.setTtl(ttlNow);
-                        sessionsTable().updateItem(it);
-                    }
-                });
-    }
+        v = item.get(AccountAttrs.UPDATED_AT);
+        account.setUpdatedAt(v == null || v.s() == null ? null : Instant.parse(v.s()));
 
-    @Override
-    public void markEmailVerified(String userId) {
-        DynamoDbTable<Account> table =
-                enhanced.table(AccountAttrs.TABLE, TableSchema.fromBean(Account.class));
+        v = item.get(AccountAttrs.SETTINGS_JSON);
+        account.setSettingsJson(v == null ? null : v.s());
 
-        Account partial = new Account();
-        partial.setUserid(userId);
-        partial.setEmailVerified(Boolean.TRUE);
-        partial.setUpdatedAt(Instant.now());
+        var n = item.get(AccountAttrs.LOGIN_FAIL_COUNT);
+        account.setLoginFailCount(n == null || n.n() == null ? null : Integer.parseInt(n.n()));
 
-        table.updateItem(
-                UpdateItemEnhancedRequest.builder(Account.class)
-                        .item(partial)
-                        .ignoreNulls(true)
-                        .build()
-        );
-    }
+        v = item.get(AccountAttrs.LOCK_UNTIL);
+        account.setLockUntil(v == null || v.s() == null ? null : Instant.parse(v.s()));
 
-    private static String emailHash(String normalizedEmail) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] d = md.digest(normalizedEmail.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(d.length * 2);
-            for (byte b : d) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to hash email", e);
-        }
+        v = item.get(AccountAttrs.LAST_LOGIN_AT);
+        account.setLastLoginAt(v == null || v.s() == null ? null : Instant.parse(v.s()));
+
+        v = item.get(AccountAttrs.LAST_LOGIN_IP);
+        account.setLastLoginIp(v == null ? null : v.s());
+
+        v = item.get(AccountAttrs.LAST_LOGIN_UA);
+        account.setLastLoginUserAgent(v == null ? null : v.s());
+
+        return account;
     }
 }

@@ -1,6 +1,5 @@
 package com.nimbly.phshoesbackend.services.common.core.repository.dynamo;
 
-
 import com.nimbly.phshoesbackend.services.common.core.model.SuppressionEntry;
 import com.nimbly.phshoesbackend.services.common.core.model.SuppressionReason;
 import com.nimbly.phshoesbackend.services.common.core.model.dynamo.SuppressionAttrs;
@@ -11,7 +10,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Repository
@@ -20,120 +19,100 @@ public class DynamoDbSuppressionRepository implements SuppressionRepository {
 
     private final DynamoDbClient dynamo;
 
-    private static Map<String, AttributeValue> key(String email) {
-        return Map.of(SuppressionAttrs.PK_EMAIL, AttributeValue.builder().s(email).build());
+    private static Map<String, AttributeValue> key(String emailHash) {
+        return Map.of(SuppressionAttrs.PK_EMAIL_HASH, AttributeValue.fromS(emailHash));
     }
 
     @Override
-    public boolean isSuppressed(String email) {
-        var out = dynamo.getItem(GetItemRequest.builder()
+    public boolean isSuppressed(String emailHash) {
+        var response = dynamo.getItem(GetItemRequest.builder()
                 .tableName(SuppressionAttrs.TABLE)
-                .key(key(email))
+                .key(key(emailHash))
                 .consistentRead(true)
                 .build());
 
-        var item = out.item();
+        var item = response.item();
         if (item == null || item.isEmpty()) return false;
 
-        // No TTL means permanent suppression
+        // If no TTL → permanent suppression
         var ttl = item.get(SuppressionAttrs.EXPIRES_AT);
         if (ttl == null || ttl.n() == null || ttl.n().isBlank()) return true;
 
         long now = Instant.now().getEpochSecond();
-        return Long.parseLong(ttl.n()) > now;
+        long expires = Long.parseLong(ttl.n());
+        return expires > now;
     }
 
     @Override
     public void put(SuppressionEntry entry) {
-        Map<String, AttributeValue> item = new HashMap<>();
+        var item = new LinkedHashMap<String, AttributeValue>(8);
 
-        item.put(SuppressionAttrs.PK_EMAIL,
-                AttributeValue.builder().s(entry.getEmail()).build());
+        item.put(SuppressionAttrs.PK_EMAIL_HASH, AttributeValue.fromS(entry.getEmailHash()));
 
-        Long expiresAt = entry.getExpiresAt();
-        if (expiresAt != null) {
-            item.put(SuppressionAttrs.EXPIRES_AT,
-                    AttributeValue.builder().n(Long.toString(expiresAt)).build());
-        }
+        if (entry.getExpiresAt() != null)
+            item.put(SuppressionAttrs.EXPIRES_AT, AttributeValue.fromN(Long.toString(entry.getExpiresAt())));
 
-        Instant createdAt = entry.getCreatedAt();
-        if (createdAt != null) {
-            item.put(SuppressionAttrs.CREATED_AT,
-                    AttributeValue.builder().s(createdAt.toString()).build());
-        }
+        if (entry.getCreatedAt() != null)
+            item.put(SuppressionAttrs.CREATED_AT, AttributeValue.fromS(entry.getCreatedAt().toString()));
 
-        SuppressionReason reason = entry.getReason();
-        if (reason != null) {
-            item.put(SuppressionAttrs.REASON,
-                    AttributeValue.builder().s(reason.name()).build());
-        }
+        if (entry.getReason() != null)
+            item.put(SuppressionAttrs.REASON, AttributeValue.fromS(entry.getReason().name()));
 
-        String source = entry.getSource();
-        if (source != null && !source.isBlank()) {
-            item.put(SuppressionAttrs.SOURCE,
-                    AttributeValue.builder().s(source).build());
-        }
+        if (entry.getSource() != null && !entry.getSource().isBlank())
+            item.put(SuppressionAttrs.SOURCE, AttributeValue.fromS(entry.getSource()));
 
-        PutItemRequest request = PutItemRequest.builder()
+        if (entry.getNotes() != null && !entry.getNotes().isBlank())
+            item.put(SuppressionAttrs.NOTES, AttributeValue.fromS(entry.getNotes()));
+
+        dynamo.putItem(PutItemRequest.builder()
                 .tableName(SuppressionAttrs.TABLE)
                 .item(item)
-                .build();
-
-        dynamo.putItem(request);
-    }
-
-
-    @Override
-    public void remove(String email) {
-        dynamo.deleteItem(DeleteItemRequest.builder()
-                .tableName(SuppressionAttrs.TABLE)
-                .key(key(email))
                 .build());
     }
 
     @Override
-    public SuppressionEntry get(String email) {
-        GetItemResponse out = dynamo.getItem(GetItemRequest.builder()
+    public void remove(String emailHash) {
+        dynamo.deleteItem(DeleteItemRequest.builder()
                 .tableName(SuppressionAttrs.TABLE)
-                .key(key(email))
+                .key(key(emailHash))
+                .build());
+    }
+
+    @Override
+    public SuppressionEntry get(String emailHash) {
+        var response = dynamo.getItem(GetItemRequest.builder()
+                .tableName(SuppressionAttrs.TABLE)
+                .key(key(emailHash))
                 .consistentRead(true)
                 .build());
 
-        Map<String, AttributeValue> item = out.item();
-        if (item == null || item.isEmpty()) {
-            return null;
-        }
+        var item = response.item();
+        if (item == null || item.isEmpty()) return null;
 
-        SuppressionEntry entry = new SuppressionEntry();
-        entry.setEmail(email);
+        var entry = new SuppressionEntry();
+        entry.setEmailHash(emailHash);
 
-        AttributeValue ttl = item.get(SuppressionAttrs.EXPIRES_AT);
-        if (ttl != null && ttl.n() != null && !ttl.n().isBlank()) {
+        var ttl = item.get(SuppressionAttrs.EXPIRES_AT);
+        if (ttl != null && ttl.n() != null && !ttl.n().isBlank())
             entry.setExpiresAt(Long.parseLong(ttl.n()));
-        }
 
-        AttributeValue created = item.get(SuppressionAttrs.CREATED_AT);
+        var created = item.get(SuppressionAttrs.CREATED_AT);
         if (created != null && created.s() != null && !created.s().isBlank()) {
-            try {
-                entry.setCreatedAt(Instant.parse(created.s()));
-            } catch (java.time.format.DateTimeParseException ignore) {
-                // leave null if bad format
-            }
+            try { entry.setCreatedAt(Instant.parse(created.s())); } catch (Exception ignore) {}
         }
 
-        AttributeValue reason = item.get(SuppressionAttrs.REASON);
+        var reason = item.get(SuppressionAttrs.REASON);
         if (reason != null && reason.s() != null && !reason.s().isBlank()) {
-            try {
-                entry.setReason(SuppressionReason.valueOf(reason.s()));
-            } catch (IllegalArgumentException ignore) {
-                // leave null if unknown enum constant
-            }
+            try { entry.setReason(SuppressionReason.valueOf(reason.s())); } catch (Exception ignore) {}
         }
 
-        AttributeValue source = item.get(SuppressionAttrs.SOURCE);
-        if (source != null && source.s() != null && !source.s().isBlank()) {
+        var source = item.get(SuppressionAttrs.SOURCE);
+        if (source != null && source.s() != null && !source.s().isBlank())
             entry.setSource(source.s());
-        }
+
+        var notes = item.get(SuppressionAttrs.NOTES);
+        if (notes != null && notes.s() != null && !notes.s().isBlank())
+            entry.setNotes(notes.s());
 
         return entry;
     }

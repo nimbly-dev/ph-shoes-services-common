@@ -1,37 +1,64 @@
+// VerificationEntry.java
 package com.nimbly.phshoesbackend.services.common.core.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import com.nimbly.phshoesbackend.services.common.core.model.dynamo.VerificationAttrs;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import lombok.Setter;
 
 import java.time.Instant;
 
-@DynamoDbBean
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
+
 @Data
+@NoArgsConstructor
+@DynamoDbBean
 public class VerificationEntry {
-    // ---- Keys & identity ----
-    private String verificationId; // PK
+
+    @Getter(onMethod_ = {
+            @DynamoDbPartitionKey,
+            @DynamoDbAttribute(VerificationAttrs.PK_VERIFICATION_ID)
+    })
+    @Setter
+    private String verificationId;
+
+    @Getter(onMethod_ = {
+            @DynamoDbAttribute(VerificationAttrs.USER_ID)
+    })
+    @Setter
     private String userId;
 
-    // ---- Email context ----
-    private String email;
+    // ensure a GSI exists if you use this as an index key
+    @Getter(onMethod_ = {
+            @DynamoDbSecondaryPartitionKey(indexNames = VerificationAttrs.GSI_EMAIL),
+            @DynamoDbAttribute(VerificationAttrs.EMAIL_HASH)
+    })
+    @Setter
+    private String emailHash;
 
-    // ---- Token/flow status ----
+    @Getter(onMethod_ = {
+            @DynamoDbAttribute(VerificationAttrs.STATUS)
+    })
+    @Setter
     private VerificationStatus status;
-    private String codeHash;       // optional: if you also support 6-digit code entry
 
-    // ---- Timestamps ----
-    private Long   expiresAt;      // epoch seconds (DynamoDB TTL attribute)
-    private String createdAt;      // ISO-8601
-    private String verifiedAt;     // ISO-8601 (nullable)
+    // TTL (epoch seconds)
+    @Getter(onMethod_ = {
+            @DynamoDbAttribute(VerificationAttrs.EXPIRES_AT)
+    })
+    @Setter
+    private Long expiresAt;
 
-    // Partition key
-    @DynamoDbPartitionKey
-    public String getVerificationId() { return verificationId; }
+    @Getter(onMethod_ = {
+            @DynamoDbAttribute(VerificationAttrs.CREATED_AT)
+    })
+    @Setter
+    private Instant createdAt;
+
+    @Getter(onMethod_ = {
+            @DynamoDbAttribute(VerificationAttrs.VERIFIED_AT)
+    })
+    @Setter
+    private Instant verifiedAt;
 }
