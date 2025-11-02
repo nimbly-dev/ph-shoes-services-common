@@ -14,6 +14,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -32,6 +33,7 @@ public class DynamoDbAccountRepository implements AccountRepository {
     private static final String VERIF_TABLE = "verifications";
 
     private final DynamoDbEnhancedClient enhanced;
+
 
     private static final TableSchema<SessionItemDto> SESSIONS_SCHEMA =
             StaticTableSchema.builder(SessionItemDto.class)
@@ -256,9 +258,22 @@ public class DynamoDbAccountRepository implements AccountRepository {
                 });
     }
 
+    @Override
+    public void markEmailVerified(String userId) {
+        DynamoDbTable<Account> table =
+                enhanced.table(AccountAttrs.TABLE, TableSchema.fromBean(Account.class));
 
-    private static String normalize(String email) {
-        return email.trim().toLowerCase();
+        Account partial = new Account();
+        partial.setUserid(userId);
+        partial.setEmailVerified(Boolean.TRUE);
+        partial.setUpdatedAt(Instant.now());
+
+        table.updateItem(
+                UpdateItemEnhancedRequest.builder(Account.class)
+                        .item(partial)
+                        .ignoreNulls(true)
+                        .build()
+        );
     }
 
     private static String emailHash(String normalizedEmail) {

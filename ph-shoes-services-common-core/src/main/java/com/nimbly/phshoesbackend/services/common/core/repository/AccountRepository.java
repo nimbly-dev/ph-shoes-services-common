@@ -20,4 +20,5 @@ public interface AccountRepository {
     void revokeSession(String jti);
 
     void revokeAllSessionsForUser(String userid);
+    void markEmailVerified(String userId);
 }

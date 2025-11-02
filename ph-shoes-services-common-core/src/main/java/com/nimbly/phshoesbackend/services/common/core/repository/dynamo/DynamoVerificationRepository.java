@@ -110,22 +110,4 @@ public class DynamoVerificationRepository implements VerificationRepository {
                 .expressionAttributeValues(values)
                 .build());
     }
-
-    @Override
-    public void markEmailVerified(String userId, String updatedAtIso) {
-        ddb.updateItem(UpdateItemRequest.builder()
-                .tableName(AccountAttrs.TABLE)
-                .key(Map.of(
-                        AccountAttrs.PK_USERID,
-                        AttributeValue.builder().s(userId).build()))
-                .updateExpression("SET #v = :true, #u = :now")
-                .expressionAttributeNames(Map.of(
-                        "#v", AccountAttrs.IS_VERIFIED,
-                        "#u", AccountAttrs.UPDATED_AT))
-                .expressionAttributeValues(Map.of(
-                        ":true", AttributeValue.builder().bool(true).build(),
-                        ":now",  AttributeValue.builder().s(updatedAtIso).build()))
-                .build());
-    }
-
 }
