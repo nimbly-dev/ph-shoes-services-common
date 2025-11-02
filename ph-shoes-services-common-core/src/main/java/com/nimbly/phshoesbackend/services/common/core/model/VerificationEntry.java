@@ -20,8 +20,7 @@ public class VerificationEntry {
     private String userId;
 
     // ---- Email context ----
-    private String emailHash;      // sha256(lowercased email)
-    private String emailPlain;     // normalized/plain (lowercased)
+    private String email;
 
     // ---- Token/flow status ----
     private VerificationStatus status;
@@ -35,13 +34,4 @@ public class VerificationEntry {
     // Partition key
     @DynamoDbPartitionKey
     public String getVerificationId() { return verificationId; }
-
-    // Convenience helpers
-    public boolean isExpired(long nowEpochSeconds) {
-        return expiresAt != null && expiresAt <= nowEpochSeconds;
-    }
-
-    public boolean isPending() {
-        return "PENDING".equals(status);
-    }
 }

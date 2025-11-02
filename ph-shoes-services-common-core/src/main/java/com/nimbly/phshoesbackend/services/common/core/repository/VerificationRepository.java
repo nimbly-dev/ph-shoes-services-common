@@ -10,6 +10,5 @@ public interface VerificationRepository {
     void put(VerificationEntry e);
     Optional<VerificationEntry> getById(String verificationId, boolean consistentRead);
     void markUsedIfPendingAndNotExpired(String verificationId, long nowEpochSeconds);
-
     void markStatusIfPending(String verificationId, VerificationStatus newStatus);
 }
