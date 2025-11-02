@@ -44,26 +44,4 @@ public class VerificationEntry {
     public boolean isPending() {
         return "PENDING".equals(status);
     }
-
-    // Factory for a fresh PENDING entry
-    public static VerificationEntry pending(
-            String verificationId,
-            String userId,
-            String emailNorm,
-            String emailHash,
-            long expiresAtEpochSeconds,
-            Instant createdAtInstant,
-            String codeHash
-    ) {
-        return VerificationEntry.builder()
-                .verificationId(verificationId)
-                .userId(userId)
-                .emailPlain(emailNorm)
-                .emailHash(emailHash)
-                .status("PENDING")
-                .codeHash(codeHash)
-                .expiresAt(expiresAtEpochSeconds)
-                .createdAt(createdAtInstant.toString())
-                .build();
-    }
 }
