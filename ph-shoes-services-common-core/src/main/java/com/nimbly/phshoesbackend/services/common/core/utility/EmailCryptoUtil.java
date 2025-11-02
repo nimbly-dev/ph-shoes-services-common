@@ -19,12 +19,12 @@ public final class EmailCryptoUtil {
 
     private EmailCryptoUtil() {}
 
-    public String normalize(String email) {
+    public static String normalize(String email) {
         if (email == null) return null;
         return email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
-    public String hmacSha256Hex(byte[] pepper, String normalizedEmail) {
+    public static String hmacSha256Hex(byte[] pepper, String normalizedEmail) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(pepper, "HmacSHA256"));
@@ -37,7 +37,7 @@ public final class EmailCryptoUtil {
         }
     }
 
-    public String aesGcmEncryptB64(byte[] aesKey, String plaintext) {
+    public static String aesGcmEncryptB64(byte[] aesKey, String plaintext) {
         try {
             byte[] iv = new byte[GCM_IV_BYTES];
             RNG.nextBytes(iv);
@@ -53,7 +53,7 @@ public final class EmailCryptoUtil {
         }
     }
 
-    public String aesGcmDecryptB64(byte[] aesKey, String b64) {
+    public static String aesGcmDecryptB64(byte[] aesKey, String b64) {
         try {
             byte[] packed = Base64.getDecoder().decode(b64);
             byte[] iv = new byte[GCM_IV_BYTES];
