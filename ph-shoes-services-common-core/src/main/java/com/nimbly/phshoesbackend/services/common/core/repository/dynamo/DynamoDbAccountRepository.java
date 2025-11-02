@@ -161,4 +161,12 @@ public class DynamoDbAccountRepository implements AccountRepository {
 
         return account;
     }
+
+    @Override
+    public void deleteByUserId(String userId) {
+        ddb.deleteItem(DeleteItemRequest.builder()
+                .tableName(AccountAttrs.TABLE)
+                .key(Map.of(AccountAttrs.PK_USERID, AttributeValue.fromS(userId)))
+                .build());
+    }
 }

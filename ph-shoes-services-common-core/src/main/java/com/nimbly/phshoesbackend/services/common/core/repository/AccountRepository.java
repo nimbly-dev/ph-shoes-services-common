@@ -15,4 +15,6 @@ public interface AccountRepository {
     void save(Account account);
 
     void setVerified(String userId, boolean verified);
+
+    void deleteByUserId(String userId);
 }
