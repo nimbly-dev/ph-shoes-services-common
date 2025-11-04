@@ -78,4 +78,20 @@ public class DynamoDbVerificationRepository implements VerificationRepository {
                 .conditionExpression(cond)
                 .build());
     }
+
+    @Override
+    public boolean hasVerifiedEntryForEmailHash(String emailHash) {
+        DynamoDbIndex<VerificationEntry> index = table().index(VerificationAttrs.GSI_EMAIL);
+        PageIterable<VerificationEntry> pages = index.query(QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(emailHash).build()))
+                .build());
+        for (Page<VerificationEntry> page : pages) {
+            for (VerificationEntry entry : page.items()) {
+                if (entry.getStatus() == VerificationStatus.VERIFIED) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
