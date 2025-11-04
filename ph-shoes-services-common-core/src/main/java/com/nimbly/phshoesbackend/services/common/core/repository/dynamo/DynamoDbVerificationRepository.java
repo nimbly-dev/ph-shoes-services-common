@@ -6,6 +6,7 @@ import com.nimbly.phshoesbackend.services.common.core.model.dynamo.VerificationA
 import com.nimbly.phshoesbackend.services.common.core.repository.VerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
@@ -82,9 +83,10 @@ public class DynamoDbVerificationRepository implements VerificationRepository {
     @Override
     public boolean hasVerifiedEntryForEmailHash(String emailHash) {
         DynamoDbIndex<VerificationEntry> index = table().index(VerificationAttrs.GSI_EMAIL);
-        PageIterable<VerificationEntry> pages = index.query(QueryEnhancedRequest.builder()
-                .queryConditional(QueryConditional.keyEqualTo(Key.builder().partitionValue(emailHash).build()))
-                .build());
+        SdkIterable<Page<VerificationEntry>> pages = index.query(r -> r
+                .queryConditional(QueryConditional.keyEqualTo(
+                        Key.builder().partitionValue(emailHash).build()))
+        );
         for (Page<VerificationEntry> page : pages) {
             for (VerificationEntry entry : page.items()) {
                 if (entry.getStatus() == VerificationStatus.VERIFIED) {
