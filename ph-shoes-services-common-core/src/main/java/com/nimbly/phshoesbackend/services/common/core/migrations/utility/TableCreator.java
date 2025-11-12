@@ -25,12 +25,12 @@ public class TableCreator {
 
     private final DynamoDbClient ddb;
 
-    /** Create a table if missing; waits until ACTIVE. Billing defaults to PAY_PER_REQUEST when null. */
+    /** Create a table if missing; waits until ACTIVE. Billing defaults to PROVISIONED when null. */
     public void createTableIfNotExists(
             String table,
             List<AttributeDefinition> attributes,
             List<KeySchemaElement> keySchema,
-            BillingMode billingMode,           // null ⇒ PAY_PER_REQUEST
+            BillingMode billingMode,           // null ⇒ PROVISIONED
             Long readCapacityUnits,            // used only for PROVISIONED
             Long writeCapacityUnits            // used only for PROVISIONED
     ) {
@@ -40,7 +40,7 @@ public class TableCreator {
             return;
         }
 
-        BillingMode bm = (billingMode != null) ? billingMode : BillingMode.PAY_PER_REQUEST;
+        BillingMode bm = (billingMode != null) ? billingMode : BillingMode.PROVISIONED;
         CreateTableRequest.Builder b = CreateTableRequest.builder()
                 .tableName(table)
                 .attributeDefinitions(attributes)
@@ -48,8 +48,8 @@ public class TableCreator {
                 .billingMode(bm);
 
         if (bm == BillingMode.PROVISIONED) {
-            long rcu = Optional.ofNullable(readCapacityUnits).orElse(5L);
-            long wcu = Optional.ofNullable(writeCapacityUnits).orElse(5L);
+            long rcu = Optional.ofNullable(readCapacityUnits).orElse(1L);
+            long wcu = Optional.ofNullable(writeCapacityUnits).orElse(1L);
             b = b.provisionedThroughput(ProvisionedThroughput.builder()
                     .readCapacityUnits(rcu).writeCapacityUnits(wcu).build());
         }
@@ -98,8 +98,8 @@ public class TableCreator {
                 .projection(Projection.builder().projectionType(ProjectionType.ALL).build());
 
         if (tableMode == BillingMode.PROVISIONED) {
-            long rcu = Optional.ofNullable(indexReadCapacityUnits).orElse(5L);
-            long wcu = Optional.ofNullable(indexWriteCapacityUnits).orElse(5L);
+            long rcu = Optional.ofNullable(indexReadCapacityUnits).orElse(1L);
+            long wcu = Optional.ofNullable(indexWriteCapacityUnits).orElse(1L);
             gsi = gsi.provisionedThroughput(ProvisionedThroughput.builder()
                     .readCapacityUnits(rcu).writeCapacityUnits(wcu).build());
         }
@@ -163,7 +163,11 @@ public class TableCreator {
     }
 
     private BillingMode tableBillingMode(TableDescription desc) {
-        return (desc.provisionedThroughput() != null) ? BillingMode.PROVISIONED : BillingMode.PAY_PER_REQUEST;
+        BillingModeSummary summary = desc.billingModeSummary();
+        if (summary != null && summary.billingMode() != null) {
+            return summary.billingMode();
+        }
+        return BillingMode.PROVISIONED;
     }
 
     private void sleep(long ms) {
