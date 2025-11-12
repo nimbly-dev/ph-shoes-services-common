@@ -147,7 +147,7 @@ public class TableCreator {
 
     /** Wait until GSI is ACTIVE. */
     public void waitGsiActive(String table, String indexName) {
-        for (int i = 0; i < 240; i++) {
+        for (int i = 0; i < 600; i++) {
             var t = ddb.describeTable(b -> b.tableName(table)).table();
             var gsi = Optional.ofNullable(t.globalSecondaryIndexes()).orElse(List.of())
                     .stream().filter(x -> indexName.equals(x.indexName())).findFirst();
