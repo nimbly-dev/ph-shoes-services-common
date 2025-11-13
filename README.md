@@ -31,3 +31,41 @@ phshoes:
 
 You can override the `ApiRateLimiter` bean or the interceptor entirely if a service needs custom
 behaviour, but every service gets the default guardrails automatically once the dependency is present.
+
+## Service Status Endpoint
+
+The commons module also provides a lightweight `/system/status` controller so each microservice
+can expose a warm-up friendly JSON payload without re-implementing boilerplate.
+
+Enable and customize it via `phshoes.status.*`:
+
+```yaml
+phshoes:
+  status:
+    enabled: true
+    path: /system/status
+    service-id: user-accounts
+    display-name: User Accounts Service
+    environment: ${APP_ENV:local}
+    version: ${APP_VERSION:local}
+    description: Handles account creation and verification flows.
+    metadata:
+      region: ap-southeast-1
+      owner: accounts
+```
+
+Add optional `ServiceStatusContributor` beans if a service wants to check downstream
+dependencies:
+
+```java
+@Bean
+ServiceStatusContributor dynamoContributor(DynamoDbClient client) {
+    return builder -> {
+        boolean reachable = client != null; // call DescribeTable, etc.
+        builder.dependency("dynamo", reachable ? ServiceState.UP : ServiceState.DOWN, "Accounts table");
+    };
+}
+```
+
+Don’t forget to keep the configured path public in your security rules (e.g. permit GET
+`/system/status` alongside `/actuator/health`).
