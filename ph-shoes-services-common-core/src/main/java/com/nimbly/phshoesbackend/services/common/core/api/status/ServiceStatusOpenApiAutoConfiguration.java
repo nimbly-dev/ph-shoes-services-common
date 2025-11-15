@@ -1,6 +1,6 @@
 package com.nimbly.phshoesbackend.services.common.core.api.status;
 
-import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -52,7 +52,7 @@ public class ServiceStatusOpenApiAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(name = "phShoesServiceStatusSecurityCustomizer")
-    public OpenApiCustomiser phShoesServiceStatusSecurityCustomizer(ServiceStatusProperties props) {
+    public GlobalOpenApiCustomizer phShoesServiceStatusSecurityCustomizer(ServiceStatusProperties props) {
         boolean removeSecurity = props.getOpenapi() == null || props.getOpenapi().isRemoveSecurity();
         if (!removeSecurity) {
             return openApi -> {
