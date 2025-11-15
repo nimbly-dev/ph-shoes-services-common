@@ -1,2 +1,3 @@
 com.nimbly.phshoesbackend.services.common.core.migrations.config.MigrationAutoConfiguration
 com.nimbly.phshoesbackend.services.common.core.api.config.ApiRateLimitAutoConfiguration
+com.nimbly.phshoesbackend.services.common.core.api.status.ServiceStatusAutoConfiguration

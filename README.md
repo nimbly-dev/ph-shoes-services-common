@@ -69,3 +69,17 @@ ServiceStatusContributor dynamoContributor(DynamoDbClient client) {
 
 Don’t forget to keep the configured path public in your security rules (e.g. permit GET
 `/system/status` alongside `/actuator/health`).
+
+### OpenAPI visibility
+
+Services that already depend on Springdoc will automatically get a dedicated
+`/v3/api-docs/service-status` group so the status endpoint appears in Swagger UI.
+Customize it via:
+
+```yaml
+phshoes:
+  status:
+    openapi:
+      enabled: true
+      group-name: status
+```

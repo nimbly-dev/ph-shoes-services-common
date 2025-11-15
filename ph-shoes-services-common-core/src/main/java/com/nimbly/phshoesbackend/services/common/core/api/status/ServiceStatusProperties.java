@@ -36,4 +36,13 @@ public class ServiceStatusProperties {
 
     /** Additional free-form metadata bubbled up to the response. */
     private Map<String, Object> metadata = new LinkedHashMap<>();
+
+    /** Optional OpenAPI exposure customisation. */
+    private OpenApiProperties openapi = new OpenApiProperties();
+
+    @Data
+    public static class OpenApiProperties {
+        private boolean enabled = true;
+        private String groupName = "service-status";
+    }
 }
