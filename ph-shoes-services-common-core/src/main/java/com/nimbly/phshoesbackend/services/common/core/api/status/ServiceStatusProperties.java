@@ -43,6 +43,7 @@ public class ServiceStatusProperties {
     @Data
     public static class OpenApiProperties {
         private boolean enabled = true;
-        private String groupName = "service-status";
+        private String groupName = "default";
+        private String[] pathsToMatch = new String[]{"/**"};
     }
 }

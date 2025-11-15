@@ -12,10 +12,12 @@ class ServiceStatusOpenApiAutoConfigurationTest {
         ServiceStatusProperties props = new ServiceStatusProperties();
         props.setPath("/custom/status");
         props.getOpenapi().setGroupName("custom-status");
+        props.getOpenapi().setPathsToMatch(new String[]{"/api/**"});
 
         GroupedOpenApi api = new ServiceStatusOpenApiAutoConfiguration()
                 .phShoesServiceStatusGroupedOpenApi(props);
 
         assertThat(api.getGroup()).isEqualTo("custom-status");
+        assertThat(api.getPathsToMatch()).contains("/api/**", "/custom/status");
     }
 }

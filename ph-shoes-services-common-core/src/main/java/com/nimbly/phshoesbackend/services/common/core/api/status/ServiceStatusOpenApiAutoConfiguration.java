@@ -17,15 +17,34 @@ public class ServiceStatusOpenApiAutoConfiguration {
     @ConditionalOnMissingBean(name = "phShoesServiceStatusGroupedOpenApi")
     public GroupedOpenApi phShoesServiceStatusGroupedOpenApi(ServiceStatusProperties props) {
         String path = props.getPath();
-        String normalizedPath = StringUtils.hasText(path) ? path : "/system/status";
         ServiceStatusProperties.OpenApiProperties openapi = props.getOpenapi();
         String groupName = openapi != null && StringUtils.hasText(openapi.getGroupName())
                 ? openapi.getGroupName()
-                : "service-status";
+                : "default";
+
+        String[] pathsToMatch = openapi != null && openapi.getPathsToMatch() != null && openapi.getPathsToMatch().length > 0
+                ? openapi.getPathsToMatch()
+                : new String[]{"/**"};
+
+        // Always ensure the explicit status path is covered.
+        String normalizedPath = StringUtils.hasText(path) ? path : "/system/status";
+        boolean statusPathIncluded = false;
+        for (String candidate : pathsToMatch) {
+            if (StringUtils.hasText(candidate) && candidate.equals(normalizedPath)) {
+                statusPathIncluded = true;
+                break;
+            }
+        }
+        if (!statusPathIncluded) {
+            String[] merged = new String[pathsToMatch.length + 1];
+            System.arraycopy(pathsToMatch, 0, merged, 0, pathsToMatch.length);
+            merged[pathsToMatch.length] = normalizedPath;
+            pathsToMatch = merged;
+        }
 
         return GroupedOpenApi.builder()
                 .group(groupName)
-                .pathsToMatch(normalizedPath)
+                .pathsToMatch(pathsToMatch)
                 .build();
     }
 }

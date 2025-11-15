@@ -81,5 +81,6 @@ phshoes:
   status:
     openapi:
       enabled: true
-      group-name: status
+      group-name: default       # merges into existing "default" spec
+      paths-to-match: ["/**"]   # include the rest of the controllers
 ```
