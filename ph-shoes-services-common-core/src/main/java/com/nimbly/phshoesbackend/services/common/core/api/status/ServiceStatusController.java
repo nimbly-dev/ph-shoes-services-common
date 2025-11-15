@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("${phshoes.status.path:/system/status}")
 @ConditionalOnBean(ServiceStatusReporter.class)
 @ConditionalOnProperty(prefix = "phshoes.status", name = "enabled", havingValue = "true", matchIfMissing = true)
-class ServiceStatusController {
+public class ServiceStatusController {
 
     private final ServiceStatusReporter reporter;
 
