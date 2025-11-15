@@ -45,5 +45,6 @@ public class ServiceStatusProperties {
         private boolean enabled = true;
         private String groupName = "default";
         private String[] pathsToMatch = new String[]{"/**"};
+        private boolean removeSecurity = true;
     }
 }

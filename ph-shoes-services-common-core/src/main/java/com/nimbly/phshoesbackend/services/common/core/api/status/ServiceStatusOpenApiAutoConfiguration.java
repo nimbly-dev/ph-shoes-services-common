@@ -1,7 +1,9 @@
 package com.nimbly.phshoesbackend.services.common.core.api.status;
 
+import org.springdoc.core.customizers.OpenApiCustomiser;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -46,5 +48,26 @@ public class ServiceStatusOpenApiAutoConfiguration {
                 .group(groupName)
                 .pathsToMatch(pathsToMatch)
                 .build();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "phShoesServiceStatusSecurityCustomizer")
+    public OpenApiCustomiser phShoesServiceStatusSecurityCustomizer(ServiceStatusProperties props) {
+        boolean removeSecurity = props.getOpenapi() == null || props.getOpenapi().isRemoveSecurity();
+        if (!removeSecurity) {
+            return openApi -> {
+            };
+        }
+        return openApi -> {
+            if (openApi.getPaths() == null || openApi.getPaths().isEmpty()) {
+                return;
+            }
+            String match = StringUtils.hasText(props.getPath()) ? props.getPath() : "/system/status";
+            openApi.getPaths().forEach((path, pathItem) -> {
+                if (match.equals(path)) {
+                    pathItem.readOperations().forEach(operation -> operation.setSecurity(null));
+                }
+            });
+        };
     }
 }
