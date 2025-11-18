@@ -83,4 +83,8 @@ phshoes:
       enabled: true
       group-name: default       # merges into existing "default" spec
       paths-to-match: ["/**"]   # include the rest of the controllers
+      remove-security: true     # set false if a token should still be required
 ```
+
+The OpenAPI auto-config removes security requirements from the status path so
+Swagger no longer prompts for a token when trying the endpoint.

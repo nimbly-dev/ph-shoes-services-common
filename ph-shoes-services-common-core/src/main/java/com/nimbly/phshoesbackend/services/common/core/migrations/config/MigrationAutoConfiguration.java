@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @AutoConfiguration
+@ConditionalOnProperty(prefix = "schema.migrations", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(MigrationProperties.class)
 public class MigrationAutoConfiguration {
 
