@@ -2,3 +2,4 @@ com.nimbly.phshoesbackend.services.common.core.migrations.config.MigrationAutoCo
 com.nimbly.phshoesbackend.services.common.core.api.config.ApiRateLimitAutoConfiguration
 com.nimbly.phshoesbackend.services.common.core.api.status.ServiceStatusAutoConfiguration
 com.nimbly.phshoesbackend.services.common.core.api.status.ServiceStatusOpenApiAutoConfiguration
+com.nimbly.phshoesbackend.services.common.core.security.jwt.JwtSecurityAutoConfiguration
