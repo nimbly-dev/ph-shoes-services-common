@@ -17,8 +17,8 @@ public class JwtSecurityAutoConfiguration {
         return new JwtTokenService(properties);
     }
 
-    @Bean
-    @ConditionalOnMissingBean
+    @Bean(name = {"jwtAuthenticationFilter", "jwtAuthFilter"})
+    @ConditionalOnMissingBean(JwtAuthenticationFilter.class)
     @ConditionalOnProperty(prefix = "phshoes.security.jwt", name = "enabled", havingValue = "true")
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenService jwtTokenService) {
         return new JwtAuthenticationFilter(jwtTokenService);
