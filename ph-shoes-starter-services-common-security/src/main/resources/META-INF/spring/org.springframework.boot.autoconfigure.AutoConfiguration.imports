@@ -1,2 +1,2 @@
-com.nimbly.phshoesbackend.commons.security.autoconfig.CommonsSecurityAutoConfiguration
+com.nimbly.phshoesbackend.services.common.core.security.autoconfig.JwtSecurityAutoConfiguration
 

@@ -6,8 +6,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiProperties;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties;
 import com.nimbly.phshoesbackend.commons.core.config.props.DynamoMigrationProperties;
-import com.nimbly.phshoesbackend.commons.core.config.props.SecurityProperties;
 import com.nimbly.phshoesbackend.commons.core.config.props.ServiceStatusProperties;
+import com.nimbly.phshoesbackend.services.common.core.config.EmailSecurityProperties;
+import com.nimbly.phshoesbackend.services.common.core.config.SuppressionProperties;
 
 @AutoConfiguration
 @EnableConfigurationProperties({
@@ -15,7 +16,8 @@ import com.nimbly.phshoesbackend.commons.core.config.props.ServiceStatusProperti
         ApiRateLimitProperties.class,
         ServiceStatusProperties.class,
         DynamoMigrationProperties.class,
-        SecurityProperties.class
+        EmailSecurityProperties.class,
+        SuppressionProperties.class
 })
 public class CommonsCoreAutoConfiguration {
 }
