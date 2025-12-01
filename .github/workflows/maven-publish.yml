@@ -35,5 +35,5 @@ jobs:
           java -version
           mvn -v
 
-      - name: Build & Publish
-        run: mvn -B -U -DskipTests deploy
+      - name: Build & Publish starters
+        run: mvn -B -U -DskipTests -pl ph-shoes-starter-services-common-core,ph-shoes-starter-services-common-web,ph-shoes-starter-services-common-security -am clean deploy
