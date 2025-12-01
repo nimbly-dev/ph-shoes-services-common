@@ -1,0 +1,4 @@
+com.nimbly.phshoesbackend.commons.core.autoconfig.CommonsCoreAutoConfiguration
+com.nimbly.phshoesbackend.commons.core.autoconfig.ApiRateLimitingAutoConfiguration
+com.nimbly.phshoesbackend.commons.core.autoconfig.DynamoMigrationsAutoConfiguration
+
