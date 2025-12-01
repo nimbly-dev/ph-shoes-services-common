@@ -1,13 +1,26 @@
-# ph-shoes-services-common
-Contains Common Classes used in the PH-SHOES project
+# ph-shoes-starter-services
+
+Shared Spring Boot starters used across PH-SHOES microservices.
+
+Current modules:
+
+- `ph-shoes-starter-services-common-core` – core/common logic (models, config, utilities, Dynamo migration helpers).
+- `ph-shoes-starter-services-common-web` – web glue (rate-limiting interceptor, `/system/status` controller).
+- `ph-shoes-starter-services-common-security` – shared security primitives (JWT helpers, filters, config fragments).
 
 ## API Rate Limiting
 
-`ph-shoes-services-common-core` now ships with an auto-configured Spring MVC interceptor that applies
+`ph-shoes-starter-services-common-web` ships with an auto-configured Spring MVC interceptor that applies
 API-level rate limiting so downstream services can protect endpoints that trigger SES email sends.
 
 Add the module as a dependency and configure the guardrails via `phshoes.api.rate-limit.*`
 properties, for example:
+
+```yaml
+phshoes:
+  api:
+    base-path: /api/v1
+```
 
 ```yaml
 phshoes:
@@ -34,7 +47,7 @@ behaviour, but every service gets the default guardrails automatically once the 
 
 ## Service Status Endpoint
 
-The commons module also provides a lightweight `/system/status` controller so each microservice
+The web starter also provides a lightweight `/system/status` controller so each microservice
 can expose a warm-up friendly JSON payload without re-implementing boilerplate.
 
 Enable and customize it via `phshoes.status.*`:
@@ -72,19 +85,5 @@ Don’t forget to keep the configured path public in your security rules (e.g. p
 
 ### OpenAPI visibility
 
-Services that already depend on Springdoc will automatically get a dedicated
-`/v3/api-docs/service-status` group so the status endpoint appears in Swagger UI.
-Customize it via:
-
-```yaml
-phshoes:
-  status:
-    openapi:
-      enabled: true
-      group-name: default       # merges into existing "default" spec
-      paths-to-match: ["/**"]   # include the rest of the controllers
-      remove-security: true     # set false if a token should still be required
-```
-
-The OpenAPI auto-config removes security requirements from the status path so
-Swagger no longer prompts for a token when trying the endpoint.
+Each consumer microservice is responsible for its own Springdoc/OpenAPI configuration; the starter
+does not add any OpenAPI groups by default.
