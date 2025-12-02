@@ -83,7 +83,7 @@ public class InMemoryApiRateLimiter implements ApiRateLimiter {
         WindowCounter counter = counters.computeIfAbsent(key, k -> new WindowCounter(window, now));
         long value = counter.incrementAndGet(window, now);
         if (value > limitConfig.getLimit()) {
-            throw new RateLimitExceededException("Rate limit exceeded for " + key + " on " + routeName);
+            throw new RateLimitExceededException(key, "Rate limit exceeded for " + key + " on " + routeName);
         }
     }
 

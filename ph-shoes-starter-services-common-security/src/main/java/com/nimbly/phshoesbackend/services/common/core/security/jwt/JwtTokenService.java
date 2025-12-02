@@ -58,9 +58,9 @@ public class JwtTokenService {
         }
     }
 
-    public DecodedJWT userIdFromAuthorizationHeader(String header) {
+    public String userIdFromAuthorizationHeader(String header) {
         String token = extractToken(header);
-        return parseAccess(token);
+        return parseAccess(token).getSubject();
     }
 
     public long getAccessTtlSeconds() {
@@ -85,4 +85,3 @@ public class JwtTokenService {
         return authorizationHeader.trim();
     }
 }
-

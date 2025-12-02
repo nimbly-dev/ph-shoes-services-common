@@ -3,8 +3,15 @@ package com.nimbly.phshoesbackend.services.common.core.api.rate;
 import com.nimbly.phshoesbackend.commons.core.ratelimit.ApiRateLimitException;
 
 public class RateLimitExceededException extends ApiRateLimitException {
-    public RateLimitExceededException(String message) {
+
+    private final String scope;
+
+    public RateLimitExceededException(String scope, String message) {
         super(message);
+        this.scope = scope;
+    }
+
+    public String getScope() {
+        return scope;
     }
 }
-
