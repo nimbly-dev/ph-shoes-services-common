@@ -1,6 +1,6 @@
 com.nimbly.phshoesbackend.commons.core.autoconfig.CommonsCoreAutoConfiguration
 com.nimbly.phshoesbackend.commons.core.autoconfig.ApiRateLimitingAutoConfiguration
 com.nimbly.phshoesbackend.commons.core.autoconfig.DynamoMigrationsAutoConfiguration
-com.nimbly.phshoesbackend.services.common.core.autoconfig.EmailCryptoAutoConfiguration
-com.nimbly.phshoesbackend.services.common.core.autoconfig.SuppressionAutoConfiguration
+com.nimbly.phshoesbackend.commons.core.autoconfig.EmailCryptoAutoConfiguration
+com.nimbly.phshoesbackend.commons.core.autoconfig.SuppressionAutoConfiguration
 

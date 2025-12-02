@@ -14,7 +14,7 @@ import org.springframework.util.StringUtils;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties.LimitConfig;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties.Route;
-import com.nimbly.phshoesbackend.services.common.core.api.rate.RateLimitExceededException;
+import com.nimbly.phshoesbackend.commons.core.api.rate.RateLimitExceededException;
 
 public class InMemoryApiRateLimiter implements ApiRateLimiter {
 

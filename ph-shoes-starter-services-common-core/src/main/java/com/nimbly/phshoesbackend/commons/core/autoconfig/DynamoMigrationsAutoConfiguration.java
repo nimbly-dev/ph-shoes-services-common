@@ -13,10 +13,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 import com.nimbly.phshoesbackend.commons.core.config.props.DynamoMigrationProperties;
-import com.nimbly.phshoesbackend.services.common.core.migrations.UpgradeContext;
-import com.nimbly.phshoesbackend.services.common.core.migrations.UpgradeStep;
-import com.nimbly.phshoesbackend.services.common.core.migrations.runner.DynamoUpgradeRunner;
-import com.nimbly.phshoesbackend.services.common.core.migrations.utility.TableCreator;
+import com.nimbly.phshoesbackend.commons.core.migrations.UpgradeContext;
+import com.nimbly.phshoesbackend.commons.core.migrations.UpgradeStep;
+import com.nimbly.phshoesbackend.commons.core.migrations.runner.DynamoUpgradeRunner;
+import com.nimbly.phshoesbackend.commons.core.migrations.utility.TableCreator;
 
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
