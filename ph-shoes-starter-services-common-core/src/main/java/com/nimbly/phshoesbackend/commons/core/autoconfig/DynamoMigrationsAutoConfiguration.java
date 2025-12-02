@@ -2,6 +2,8 @@ package com.nimbly.phshoesbackend.commons.core.autoconfig;
 
 import java.util.List;
 
+import java.util.List;
+
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -11,8 +13,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 import com.nimbly.phshoesbackend.commons.core.config.props.DynamoMigrationProperties;
-import com.nimbly.phshoesbackend.commons.core.dynamo.migrations.step.UpgradeStep;
-import com.nimbly.phshoesbackend.commons.core.dynamo.migrations.step.runner.DynamoUpgradeRunner;
+import com.nimbly.phshoesbackend.services.common.core.migrations.UpgradeContext;
+import com.nimbly.phshoesbackend.services.common.core.migrations.UpgradeStep;
+import com.nimbly.phshoesbackend.services.common.core.migrations.runner.DynamoUpgradeRunner;
+import com.nimbly.phshoesbackend.services.common.core.migrations.utility.TableCreator;
 
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
@@ -24,10 +28,21 @@ public class DynamoMigrationsAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public UpgradeContext upgradeContext(DynamoMigrationProperties properties) {
+        return new UpgradeContext(properties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public TableCreator tableCreator(DynamoDbClient dynamoDbClient) {
+        return new TableCreator(dynamoDbClient);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     ApplicationRunner dynamoUpgradeRunner(List<UpgradeStep> steps,
-                                          DynamoDbClient client,
-                                          DynamoMigrationProperties properties) {
-        return new DynamoUpgradeRunner(steps, client, properties);
+                                          UpgradeContext context) {
+        return new DynamoUpgradeRunner(steps, context);
     }
 }
 
