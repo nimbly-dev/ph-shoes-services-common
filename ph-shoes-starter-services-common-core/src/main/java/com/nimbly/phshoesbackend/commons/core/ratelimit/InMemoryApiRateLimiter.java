@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties.LimitConfig;
 import com.nimbly.phshoesbackend.commons.core.config.props.ApiRateLimitProperties.Route;
+import com.nimbly.phshoesbackend.services.common.core.api.rate.RateLimitExceededException;
 
 public class InMemoryApiRateLimiter implements ApiRateLimiter {
 
@@ -82,7 +83,7 @@ public class InMemoryApiRateLimiter implements ApiRateLimiter {
         WindowCounter counter = counters.computeIfAbsent(key, k -> new WindowCounter(window, now));
         long value = counter.incrementAndGet(window, now);
         if (value > limitConfig.getLimit()) {
-            throw new ApiRateLimitException("Rate limit exceeded for " + key + " on " + routeName);
+            throw new RateLimitExceededException("Rate limit exceeded for " + key + " on " + routeName);
         }
     }
 

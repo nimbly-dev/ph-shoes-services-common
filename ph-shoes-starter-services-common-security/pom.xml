@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.nimbly.phshoesbackend.commons</groupId>
+        <groupId>com.nimbly.phshoesbackend.starters</groupId>
         <artifactId>ph-shoes-starter-services</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
@@ -21,7 +21,7 @@
     <dependencies>
         <!-- Core starter for shared config/models/JWT helpers -->
         <dependency>
-            <groupId>com.nimbly.phshoesbackend.commons</groupId>
+            <groupId>com.nimbly.phshoesbackend.starters</groupId>
             <artifactId>ph-shoes-starter-services-common-core</artifactId>
             <version>${project.version}</version>
         </dependency>

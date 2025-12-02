@@ -50,8 +50,12 @@ public class JwtTokenService {
         return builder.sign(algorithm);
     }
 
-    public DecodedJWT parseAccess(String token) throws JWTVerificationException {
-        return verifier.verify(token);
+    public DecodedJWT parseAccess(String token) {
+        try {
+            return verifier.verify(token);
+        } catch (JWTVerificationException ex) {
+            throw new JwtVerificationException(ex.getMessage(), ex);
+        }
     }
 
     public DecodedJWT userIdFromAuthorizationHeader(String header) {
@@ -69,15 +73,16 @@ public class JwtTokenService {
 
     public String extractToken(String authorizationHeader) {
         if (!StringUtils.hasText(authorizationHeader)) {
-            throw new JWTVerificationException("Missing Authorization header");
+            throw new JwtVerificationException("Missing Authorization header", null);
         }
         String prefix = properties.getHeaderPrefix();
         if (StringUtils.hasText(prefix)) {
             if (!authorizationHeader.startsWith(prefix)) {
-                throw new JWTVerificationException("Invalid Authorization header format");
+                throw new JwtVerificationException("Invalid Authorization header format", null);
             }
             return authorizationHeader.substring(prefix.length()).trim();
         }
         return authorizationHeader.trim();
     }
 }
+
