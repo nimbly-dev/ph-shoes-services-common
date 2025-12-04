@@ -12,19 +12,20 @@ import com.nimbly.phshoesbackend.commons.core.security.jwt.JwtTokenService;
 
 @AutoConfiguration
 @EnableConfigurationProperties(JwtSecurityProperties.class)
-@ConditionalOnProperty(prefix = "phshoes.security.jwt", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class JwtSecurityAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "phshoes.security.jwt", name = "enabled", havingValue = "true", matchIfMissing = true)
     public JwtTokenService jwtTokenService(JwtSecurityProperties properties) {
         return new JwtTokenService(properties);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenService jwtTokenService) {
-        return new JwtAuthenticationFilter(jwtTokenService);
+    @ConditionalOnProperty(prefix = "phshoes.security.jwt", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenService jwtTokenService,
+                                                           JwtSecurityProperties properties) {
+        return new JwtAuthenticationFilter(jwtTokenService, properties);
     }
 }
-
