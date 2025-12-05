@@ -1,5 +1,6 @@
 package com.nimbly.phshoesbackend.commons.core.status;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -15,6 +16,12 @@ public class ServiceStatus {
     String serviceId;
 
     String displayName;
+
+    ServiceState state;
+
+    Instant checkedAt;
+
+    long uptimeSeconds;
 
     String environment;
 
@@ -35,6 +42,9 @@ public class ServiceStatus {
         ServiceStatusBuilder builder = builder()
                 .serviceId(template.getServiceId())
                 .displayName(template.getDisplayName())
+                .state(template.getState())
+                .checkedAt(template.getCheckedAt())
+                .uptimeSeconds(template.getUptimeSeconds())
                 .environment(template.getEnvironment())
                 .version(template.getVersion())
                 .description(template.getDescription());

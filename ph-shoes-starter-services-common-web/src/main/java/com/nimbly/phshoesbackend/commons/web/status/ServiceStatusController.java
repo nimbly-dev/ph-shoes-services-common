@@ -1,5 +1,7 @@
 package com.nimbly.phshoesbackend.commons.web.status;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -19,6 +21,8 @@ public class ServiceStatusController {
 
     private final ObjectProvider<ServiceStatusContributor> contributors;
 
+    private final Instant startedAt = Instant.now();
+
     public ServiceStatusController(ServiceStatusProperties properties,
                                    ObjectProvider<ServiceStatusContributor> contributors) {
         this.properties = properties;
@@ -27,9 +31,13 @@ public class ServiceStatusController {
 
     @GetMapping("${phshoes.status.path:/system/status}")
     public ServiceStatus getStatus() {
+        Instant now = Instant.now();
         ServiceStatus.ServiceStatusBuilder builder = ServiceStatus.builder()
                 .serviceId(properties.getServiceId())
                 .displayName(properties.getDisplayName())
+                .state(properties.getState())
+                .checkedAt(now)
+                .uptimeSeconds(Duration.between(startedAt, now).getSeconds())
                 .environment(properties.getEnvironment())
                 .version(properties.getVersion())
                 .description(properties.getDescription());

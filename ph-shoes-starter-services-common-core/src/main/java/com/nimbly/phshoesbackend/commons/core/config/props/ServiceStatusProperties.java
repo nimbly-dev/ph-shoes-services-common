@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import com.nimbly.phshoesbackend.commons.core.status.ServiceState;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,6 +34,11 @@ public class ServiceStatusProperties {
     private String version;
 
     private String description;
+
+    /**
+     * Default state reported by the endpoint (contributors can override).
+     */
+    private ServiceState state = ServiceState.UP;
 
     /**
      * Arbitrary key/value metadata for this service.
